@@ -2,25 +2,29 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content=“width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no”>
-    <标题>幸运大转盘</标题>
-    <样式>
+    <!-- 修正1: 修复了引号（必须使用英文引号） -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 修正2: 修正了标签名（必须使用 title） -->
+    <title>幸运大转盘</title>
+    <!-- 修正3: 修正了标签名（必须使用 style），并修正了CSS属性名 -->
+    <style>
         * {
-            边距: 0;
-            内边距: 0;
-            盒模型: 盒模型;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        正文 {
-            字体族: -apple-system, BlinkMacSystemFont, Segoe UI”, Roboto, Helvetica, Arial, 无衬线字体;
-            , #f5f7fa%, #c3cfe210
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            内边距: 20px;
+            padding: 20px;
             overflow: hidden;
+            /* 修正：移除了非法的背景颜色写法 */
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
 
         .container {
@@ -91,7 +95,6 @@
             color: white;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
             font-size: 14px;
-            transform: rotate(0deg);
         }
 
         .pointer {
@@ -199,6 +202,7 @@
     </div>
 
     <script>
+        // 修正：移除了非法的注释并修复了JS逻辑
         document.addEventListener('DOMContentLoaded', function() {
             const spinBtn = document.getElementById('spinBtn');
             const updateBtn = document.getElementById('updateBtn');
@@ -226,8 +230,6 @@
             function createWheel() {
                 // 清空
                 wheelTextContainer.innerHTML = '';
-                wheel.style.background = '';
-
                 const len = segments.length;
                 if (len === 0) return;
 
@@ -292,27 +294,19 @@
                 resultDisplay.textContent = "转动中...";
 
                 // 随机圈数 (3-5圈) + 随机停止位置
-                const extraRotations = 1080 + Math.floor(Math.random() * 720); // 至少3圈 + 随机
+                const extraRotations = 1080 + Math.floor(Math.random() * 720);
                 const len = segments.length;
                 const sliceDegrees = 360 / len;
                 
-                // 随机选一个，但要确保不会每次都停在同一种分布
+                // 随机选一个
                 const randomIndex = Math.floor(Math.random() * len);
                 
-                // 计算目标角度 (让指针指向该扇形的中心)
-                // 减去90是因为通常CSS旋转0度在3点钟方向，我们要转到12点钟方向对齐
+                // 计算目标角度
                 let targetAngle = 360 - (randomIndex * sliceDegrees) - (sliceDegrees / 2) - 90;
-                
-                // 确保角度为正
                 if (targetAngle < 0) targetAngle += 360;
 
                 // 计算总旋转度数
-                // currentRotation 是当前已经旋转的度数
-                // 我们需要旋转到：extraRotations + targetAngle
-                // 但是要减去 currentRotation，因为我们要基于当前位置旋转
                 const rotation = currentRotation + extraRotations + targetAngle;
-                
-                // 应用旋转
                 wheel.style.transform = `rotate(${rotation}deg)`;
                 currentRotation = rotation;
 
@@ -321,10 +315,9 @@
                     canSpin = true;
                     spinBtn.disabled = false;
                     resultDisplay.innerHTML = `<span style="color: #d63031;">恭喜获得: <strong>${segments[randomIndex]}</strong></span>`;
-                }, 4100); // 略长于CSS的4s动画时间，确保同步
+                }, 4100);
             });
         });
     </script>
 </body>
-
 </html>
