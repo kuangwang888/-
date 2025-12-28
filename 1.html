@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>幸运大转盘</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%; /* 正方形比例 */
+            margin: 20px auto;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 4px solid #fff;
+        }
+
+        .wheel {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                #FF6B6B 0% 12.5%,
+                #4ECDC4 12.5% 25%,
+                #FFD166 25% 37.5%,
+                #06D6A0 37.5% 50%,
+                #118AB2 50% 62.5%,
+                #9B5DE5 62.5% 75%,
+                #F15BB5 75% 87.5%,
+                #00BBF9 87.5% 100%
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1);
+            transform: rotate(0deg);
+        }
+
+        .wheel-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            top: 0;
+            left: 50%;
+            transform-origin: 0% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-size: 14px;
+            transform: rotate(0deg);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #FF4136;
+            z-index: 10;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .input-area {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .input-area h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .options-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            resize: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            min-height: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 幸运大转盘</h1>
+
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <div class="wheel" id="wheel">
+                <div class="wheel-text" id="wheelText"></div>
+            </div>
+        </div>
+
+        <button id="spinBtn">开始抽奖</button>
+
+        <div class="result" id="result">等待转动...</div>
+
+        <div class="input-area">
+            <h3>✏️ 自定义选项 (每行一个)</h3>
+            <textarea class="options-input" id="optionsInput" rows="4">苹果
+香蕉
+橙子
+葡萄
+西瓜
+芒果
+草莓
+蓝莓</textarea>
+            <button id="updateBtn" style="margin-top: 10px; padding: 8px 16px; font-size: 0.9em; background-color: #28a745;">更新转盘</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const spinBtn = document.getElementById('spinBtn');
+            const updateBtn = document.getElementById('updateBtn');
+            const wheel = document.getElementById('wheel');
+            const wheelTextContainer = document.getElementById('wheelText');
+            const resultDisplay = document.getElementById('result');
+            const optionsInput = document.getElementById('optionsInput');
+
+            // 默认选项
+            let segments = [
+                "苹果", "香蕉", "橙子", 
+                "葡萄", "西瓜", "芒果", 
+                "草莓", "蓝莓"
+            ];
+            let currentRotation = 0;
+            let canSpin = true;
+
+            // 生成随机颜色
+            function getRandomColor() {
+                const hue = Math.floor(Math.random() * 360);
+                return `hsl(${hue}, 70%, 60%)`;
+            }
+
+            // 创建转盘
+            function createWheel() {
+                // 清空
+                wheelTextContainer.innerHTML = '';
+                wheel.style.background = '';
+
+                const len = segments.length;
+                if (len === 0) return;
+
+                // 计算背景渐变
+                let gradientStops = [];
+                let colors = [];
+                
+                for (let i = 0; i < len; i++) {
+                    // 为每个扇形生成颜色
+                    colors.push(getRandomColor());
+                }
+
+                // 构建 CSS 渐变
+                let backgroundStr = 'conic-gradient(';
+                for (let i = 0; i < len; i++) {
+                    const startPct = (i / len) * 100;
+                    const endPct = ((i + 1) / len) * 100;
+                    backgroundStr += `${colors[i]} ${startPct}%, ${colors[(i + 1) % len]} ${endPct}%`;
+                    if (i < len - 1) backgroundStr += ', ';
+                }
+                backgroundStr += ')';
+                wheel.style.background = backgroundStr;
+
+                // 创建文字
+                segments.forEach((text, index) => {
+                    const angle = (360 / len) * index;
+                    const segment = document.createElement('div');
+                    segment.className = 'segment';
+                    segment.style.transform = `rotate(${angle}deg)`;
+                    
+                    // 计算文字旋转角度，使其径向排列
+                    const textRotation = angle + (360 / len) / 2;
+                    segment.style.setProperty('--text-rotate', `${textRotation}deg`);
+                    
+                    // 内联样式处理
+                    segment.innerHTML = `<span style="transform: rotate(calc(var(--text-rotate) * -1deg)); display: inline-block;">${text}</span>`;
+                    wheelTextContainer.appendChild(segment);
+                });
+            }
+
+            // 初始化
+            createWheel();
+
+            // 更新转盘
+            updateBtn.addEventListener('click', () => {
+                const inputVal = optionsInput.value.trim();
+                if (inputVal) {
+                    segments = inputVal.split('\n').map(s => s.trim()).filter(s => s);
+                    if (segments.length > 0) {
+                        createWheel();
+                        resultDisplay.textContent = "转盘已更新！";
+                    }
+                }
+            });
+
+            // 转动转盘
+            spinBtn.addEventListener('click', () => {
+                if (!canSpin || segments.length === 0) return;
+
+                canSpin = false;
+                spinBtn.disabled = true;
+                resultDisplay.textContent = "转动中...";
+
+                // 随机圈数 (3-5圈) + 随机停止位置
+                const extraRotations = 1080 + Math.floor(Math.random() * 720); // 至少3圈 + 随机
+                const len = segments.length;
+                const sliceDegrees = 360 / len;
+                
+                // 随机选一个，但要确保不会每次都停在同一种分布
+                const randomIndex = Math.floor(Math.random() * len);
+                
+                // 计算目标角度 (让指针指向该扇形的中心)
+                // 减去90是因为通常CSS旋转0度在3点钟方向，我们要转到12点钟方向对齐
+                let targetAngle = 360 - (randomIndex * sliceDegrees) - (sliceDegrees / 2) - 90;
+                
+                // 确保角度为正
+                if (targetAngle < 0) targetAngle += 360;
+
+                // 计算总旋转度数
+                // currentRotation 是当前已经旋转的度数
+                // 我们需要旋转到：extraRotations + targetAngle
+                // 但是要减去 currentRotation，因为我们要基于当前位置旋转
+                const rotation = currentRotation + extraRotations + targetAngle;
+                
+                // 应用旋转
+                wheel.style.transform = `rotate(${rotation}deg)`;
+                currentRotation = rotation;
+
+                // 动画结束后
+                setTimeout(() => {
+                    canSpin = true;
+                    spinBtn.disabled = false;
+                    resultDisplay.innerHTML = `<span style="color: #d63031;">恭喜获得: <strong>${segments[randomIndex]}</strong></span>`;
+                }, 4100); // 略长于CSS的4s动画时间，确保同步
+            });
+        });
+    </script>
+</body>
+</html>
